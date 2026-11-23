@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: azubitrack
+      POSTGRES_USER: azubitrack
+      POSTGRES_PASSWORD: azubitrack
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  app:
+    build: .
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://azubitrack:azubitrack@postgres:5432/azubitrack
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: http://localhost:4000
+      JWT_ACCESS_SECRET: change-this-access-secret-to-at-least-32-characters
+      JWT_REFRESH_SECRET: change-this-refresh-secret-to-at-least-32-characters
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - app
+
+volumes:
+  postgres-data:
